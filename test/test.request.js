@@ -1,17 +1,18 @@
 
-request = superagent;
+var assert = require('assert');
+var request = require('../');
 
 test('Request inheritance', function(){
   assert(request.get('/') instanceof request.Request);
 });
 
 test('request() simple GET without callback', function(next){
-  request('GET', 'test.request.js').end();
+  request('GET', 'test/test.request.js').end();
   next();
 });
 
 test('request() simple GET', function(next){
-  request('GET', 'test.request.js').end(function(res){
+  request('GET', 'test/test.request.js').end(function(res){
     assert(res instanceof request.Response, 'respond with Response');
     assert(res.ok, 'response should be ok');
     assert(res.text, 'res.text');
@@ -20,10 +21,21 @@ test('request() simple GET', function(next){
 });
 
 test('request() simple HEAD', function(next){
-  request.head('test.request.js').end(function(res){
+  request.head('test/test.request.js').end(function(res){
     assert(res instanceof request.Response, 'respond with Response');
     assert(res.ok, 'response should be ok');
     assert(!res.text, 'res.text');
+    next();
+  });
+});
+
+test('request() error object', function(next) {
+  request('GET', '/error').end(function(res) {
+    assert(res.error, 'response should be an error');
+    assert(res.error.message == 'cannot GET /error (500)');
+    assert(res.error.status == 500);
+    assert(res.error.method == 'GET');
+    assert(res.error.url == '/error');
     next();
   });
 });
@@ -361,7 +373,7 @@ test('GET json', function(next){
   request
   .get('/pets')
   .end(function(res){
-    assert.eql(res.body, ['tobi', 'loki', 'jane']);
+    assert.deepEqual(res.body, ['tobi', 'loki', 'jane']);
     next();
   });
 });
@@ -370,7 +382,7 @@ test('GET x-www-form-urlencoded', function(next){
   request
   .get('/foo')
   .end(function(res){
-    assert.eql(res.body, { foo: 'bar' });
+    assert.deepEqual(res.body, { foo: 'bar' });
     next();
   });
 });
@@ -401,7 +413,7 @@ test('GET querystring object', function(next){
   .get('/querystring')
   .query({ search: 'Manny' })
   .end(function(res){
-    assert.eql(res.body, { search: 'Manny' });
+    assert.deepEqual(res.body, { search: 'Manny' });
     next();
   });
 });
@@ -411,7 +423,7 @@ test('GET querystring append original', function(next){
   .get('/querystring?search=Manny')
   .query({ range: '1..5' })
   .end(function(res){
-    assert.eql(res.body, { search: 'Manny', range: '1..5' });
+    assert.deepEqual(res.body, { search: 'Manny', range: '1..5' });
     next();
   });
 });
@@ -423,7 +435,7 @@ test('GET querystring multiple objects', function(next){
   .query({ range: '1..5' })
   .query({ order: 'desc' })
   .end(function(res){
-    assert.eql(res.body, { search: 'Manny', range: '1..5', order: 'desc' });
+    assert.deepEqual(res.body, { search: 'Manny', range: '1..5', order: 'desc' });
     next();
   });
 });
@@ -433,8 +445,8 @@ test('GET querystring empty objects', function(next){
   .get('/querystring')
   .query({})
   .end(function(res){
-    assert.eql(req._query, []);
-    assert.eql(res.body, {});
+    assert.deepEqual(req._query, []);
+    assert.deepEqual(res.body, {});
     next();
   });
 });
@@ -446,7 +458,7 @@ test('GET querystring with strings', function(next){
   .query('range=1..5')
   .query('order=desc')
   .end(function(res){
-    assert.eql(res.body, { search: 'Manny', range: '1..5', order: 'desc' });
+    assert.deepEqual(res.body, { search: 'Manny', range: '1..5', order: 'desc' });
     next();
   });
 });
@@ -457,7 +469,7 @@ test('GET querystring with strings and objects', function(next){
   .query('search=Manny')
   .query({ order: 'desc', range: '1..5' })
   .end(function(res){
-    assert.eql(res.body, { search: 'Manny', range: '1..5', order: 'desc' });
+    assert.deepEqual(res.body, { search: 'Manny', range: '1..5', order: 'desc' });
     next();
   });
 });
@@ -466,7 +478,7 @@ test('GET querystring object .get(uri, obj)', function(next){
   request
   .get('/querystring', { search: 'Manny' })
   .end(function(res){
-    assert.eql(res.body, { search: 'Manny' });
+    assert.deepEqual(res.body, { search: 'Manny' });
     next();
   });
 });
@@ -474,7 +486,7 @@ test('GET querystring object .get(uri, obj)', function(next){
 test('GET querystring object .get(uri, obj, fn)', function(next){
   request
   .get('/querystring', { search: 'Manny'}, function(res){
-    assert.eql(res.body, { search: 'Manny' });
+    assert.deepEqual(res.body, { search: 'Manny' });
     next();
   });
 });
@@ -512,27 +524,6 @@ test('req.timeout(ms)', function(next){
     next();
   })
 })
-
-test('req.withCredentials()', function(next){
-  request
-  .get('http://localhost:4001/')
-  .withCredentials()
-  .end(function(res){
-    assert(200 == res.status);
-    assert('tobi' == res.text);
-    next();
-  })
-})
-
-test('x-domain failure', function(next){
-  request
-  .get('http://google.com')
-  .end(function(err, res){
-    assert(err, 'error missing');
-    assert(err.crossDomain, 'not .crossDomain');
-    next();
-  });
-});
 
 test('basic auth', function(next){
   request

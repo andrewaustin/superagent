@@ -205,6 +205,18 @@ describe('request', function(){
     })
   })
 
+  describe('req.unset(field)', function(){
+    it('should remove the header field', function(done){
+      request
+      .post('http://localhost:5000/echo')
+      .unset('User-Agent')
+      .end(function(res){
+        assert(void 0 == res.header['user-agent']);
+        done();
+      })
+    })
+  })
+
   describe('req.type(str)', function(){
     it('should set the Content-Type', function(done){
       request
@@ -283,8 +295,8 @@ describe('request', function(){
     it('should write the given data', function(done){
       var req = request.post('http://localhost:5000/echo');
       req.set('Content-Type', 'application/json');
-      req.write('{"name"').should.be.a('boolean');
-      req.write(':"tobi"}').should.be.a('boolean');
+      req.write('{"name"').should.be.a.boolean;
+      req.write(':"tobi"}').should.be.a.boolean;
       req.end(function(res){
         res.text.should.equal('{"name":"tobi"}');
         done();
@@ -366,6 +378,15 @@ describe('request', function(){
         res.text.should.equal('{"name":"tobi"}');
         done();
       });
+    })
+
+    it('should emit request', function(done){
+      var req = request.post('http://localhost:5000/echo');
+      req.on('request', function(request){
+        assert(req == request);
+        done();
+      });
+      req.end();
     })
   })
 
